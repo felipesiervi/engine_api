@@ -1,7 +1,7 @@
 from dbconn import pgdb
 
 
-class compras:
+class Compras:
     @staticmethod
     def get_notas():
         dbpg = pgdb()
