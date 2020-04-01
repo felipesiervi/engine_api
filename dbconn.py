@@ -2,16 +2,18 @@ import pandas as pd
 import psycopg2
 import pypyodbc
 
+host = ""
+database = ""
+user = ""
+password = ""
+
 
 class pgdb:
     conn = None
 
     def __init__(self):
         self.conn = psycopg2.connect(
-            host="192.168.1.110",
-            database="ALTERDATA_SHOP",
-            user="postgres",
-            password="123456",
+            host=host.strip(), database=database, user=user, password=password,
         )
 
     def query(self, sql):

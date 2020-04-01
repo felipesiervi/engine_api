@@ -5,8 +5,14 @@ from flask_cors import CORS, cross_origin
 from flask import request
 import json
 from preferencias import Preferencias
+import dbconn
 
 pref = Preferencias()
+pref.carregar()
+dbconn.host = pref.data["IpBancoDados"]
+dbconn.user = pref.data["Usuario"]
+dbconn.database = pref.data["NomeBanco"]
+dbconn.password = pref.data["Senha"]
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "the quick brown fox jumps over the lazy   dog"
@@ -24,6 +30,12 @@ def get_notas():
 def get_nota_itens():
     id = request.args.get("id")
     return Response(Compras.get_nota_itens(id), mimetype="application/json")
+
+
+@app.route("/compras/get_nota_item")
+def get_nota_item():
+    id = request.args.get("id")
+    return Response(Compras.get_nota_item(id), mimetype="application/json")
 
 
 @app.route("/compras/post_preco", methods=["POST"])
@@ -47,4 +59,4 @@ def get_preferencias():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0")

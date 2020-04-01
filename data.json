@@ -1,1 +1,1 @@
-{"IpBancoDados": "192.168.1.110", "Usuario": "postgres", "Senha": "123456", "ServidorAPI": "localhost:5000", "NomeBanco": "ALTERDATA_SHOP"}
+{"IpBancoDados": "192.168.1.110", "Usuario": "postgres", "Senha": "123456", "ServidorAPI": "192.168.1.130:5000", "NomeBanco": "ALTERDATA_SHOP"}

@@ -1,4 +1,5 @@
 from dbconn import pgdb
+import json
 
 
 class Compras:
@@ -15,7 +16,7 @@ class Compras:
     @staticmethod
     def get_nota_itens(id):
         dbpg = pgdb()
-        qry = "select di.iddocumentoitem, di.iddetalhe, di.qtitem, di.vlunitario, di.vlsubst/di.qtitem vlsubst, di.vlipi/di.qtitem vlipi, de.dsdetalhe, de.allucrodesejada, de.vlprecovenda vlprecoprazo, dp.vlpreco vlprecovista, di.vlfreterateado, 0 vlrateio \
+        qry = "select di.iddocumentoitem, di.iddetalhe, cast(di.qtitem as integer) qtitem, di.vlunitario, di.vlsubst/di.qtitem vlsubst, di.vlipi/di.qtitem vlipi, de.dsdetalhe, de.allucrodesejada, de.vlprecovenda vlprecoprazo, dp.vlpreco vlprecovista, di.vlfreterateado, 0.0 vlrateio \
             from wshop.docitem di \
             join wshop.detalhe de on di.iddetalhe = de.iddetalhe \
             join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe \
@@ -27,7 +28,22 @@ class Compras:
         return rows.to_json(orient="records")
 
     @staticmethod
+    def get_nota_item(id):
+        dbpg = pgdb()
+        qry = "select de.vlprecovenda vlprecoprazo, dp.vlpreco vlprecovista \
+            from wshop.docitem di \
+            join wshop.detalhe de on di.iddetalhe = de.iddetalhe \
+            join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe \
+            where di.iddocumentoitem = '{}' \
+            and idtabela = '01000EBK0Y'".format(
+            id
+        )
+        rows = dbpg.query(qry)
+        return json.dumps(rows.to_dict("records")[0])
+
+    @staticmethod
     def post_preco(obj):
+        obj = json.loads(obj)
         dbpg = pgdb()
         update_prazo = "update wshop.detalhe set vlprecovenda = {} where iddetalhe = '{}'".format(
             obj["prazo"], obj["id"]
