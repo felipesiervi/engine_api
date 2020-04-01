@@ -30,7 +30,7 @@ class Compras:
     @staticmethod
     def get_nota_item(id):
         dbpg = pgdb()
-        qry = "select de.vlprecovenda vlprecoprazo, dp.vlpreco vlprecovista \
+        qry = "select de.vlprecovenda vlprecoprazo, dp.vlpreco vlprecovista, de.allucrodesejada \
             from wshop.docitem di \
             join wshop.detalhe de on di.iddetalhe = de.iddetalhe \
             join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe \
@@ -43,15 +43,18 @@ class Compras:
 
     @staticmethod
     def post_preco(obj):
-        obj = json.loads(obj)
-        dbpg = pgdb()
-        update_prazo = "update wshop.detalhe set vlprecovenda = {} where iddetalhe = '{}'".format(
-            obj["prazo"], obj["id"]
-        )
-        update_avista = "update wshop.detalheprecos set vlpreco = {} where iddetalhe = '{}'".format(
-            obj["avista"], obj["id"]
-        )
+        try:
+            obj = json.loads(obj)
+            dbpg = pgdb()
+            update_prazo = "update wshop.detalhe set vlprecovenda = {}, allucrodesejada = {} where iddetalhe = '{}'".format(
+                obj["prazo"], obj["margem"], obj["id"]
+            )
+            update_avista = "update wshop.detalheprecos set vlpreco = {} where iddetalhe = '{}'".format(
+                obj["avista"], obj["id"]
+            )
 
-        dbpg.execute(update_avista)
-        dbpg.execute(update_prazo)
-        return {"message": "Preços atualizados com sucesso"}
+            dbpg.execute(update_avista)
+            dbpg.execute(update_prazo)
+            return {"message": "Preços atualizados com sucesso", "success": True}
+        except:
+            return {"message": "Erro ao atualizar erro", "success": False}
