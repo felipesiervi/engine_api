@@ -46,7 +46,14 @@ class Compras:
         try:
             obj = json.loads(obj)
             dbpg = pgdb()
-            update_prazo = "update wshop.detalhe set vlprecovenda = {}, allucrodesejada = {} where iddetalhe = '{}'".format(
+
+            update_praticado = "update wshop.precos set vlpreco = {}, stexp = 'A', vlprecoant = vlpreco, dtaltvlpreco = now(), \
+                statusalt = 'Ins' WHERE iddetalhe = '{}'".format(
+                obj["prazo"], obj["id"])
+
+            update_prazo = "update wshop.detalhe set vlprecovenda = {},\
+                 allucrodesejada = {}, vlprecovendaant = vlprecovenda, dtaltvlprecovenda = now()\
+                      where iddetalhe = '{}'".format(
                 obj["prazo"], obj["margem"], obj["id"]
             )
             update_avista = "update wshop.detalheprecos set vlpreco = {} where iddetalhe = '{}'".format(
@@ -55,6 +62,7 @@ class Compras:
 
             dbpg.execute(update_avista)
             dbpg.execute(update_prazo)
+            dbpg.execute(update_praticado)
             return {"message": "Preços atualizados com sucesso", "success": True}
         except:
             return {"message": "Erro ao atualizar erro", "success": False}
