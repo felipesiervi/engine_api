@@ -19,12 +19,12 @@ class Compras:
         qry = "select di.iddocumentoitem, di.iddetalhe, cast(di.qtitem as integer) qtitem, di.vlunitario, di.vlsubst/di.qtitem vlsubst, di.vlipi/di.qtitem vlipi, de.dsdetalhe, de.allucrodesejada, de.vlprecovenda vlprecoprazo, dp.vlpreco vlprecovista, di.vlfreterateado, 0.0 vlrateio \
             from wshop.docitem di \
             join wshop.detalhe de on di.iddetalhe = de.iddetalhe \
-            join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe \
-            where di.iddocumento = '{}' \
-            and idtabela = '01000EBK0Y'".format(
+            left join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe and idtabela = '01000EBK0Y' \
+            where di.iddocumento = '{}' order by de.dsdetalhe".format(
             id
         )
         rows = dbpg.query(qry)
+        rows = rows.fillna(0)
         return rows.to_json(orient="records")
 
     @staticmethod
@@ -33,12 +33,12 @@ class Compras:
         qry = "select de.vlprecovenda vlprecoprazo, dp.vlpreco vlprecovista, de.allucrodesejada \
             from wshop.docitem di \
             join wshop.detalhe de on di.iddetalhe = de.iddetalhe \
-            join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe \
-            where di.iddocumentoitem = '{}' \
-            and idtabela = '01000EBK0Y'".format(
+            left join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe and idtabela = '01000EBK0Y' \
+            where di.iddocumentoitem = '{}'".format(
             id
         )
         rows = dbpg.query(qry)
+        rows = rows.fillna(0)
         return json.dumps(rows.to_dict("records")[0])
 
     @staticmethod
@@ -56,9 +56,10 @@ class Compras:
                       where iddetalhe = '{}'".format(
                 obj["prazo"], obj["margem"], obj["id"]
             )
-            update_avista = "update wshop.detalheprecos set vlpreco = {} where iddetalhe = '{}'".format(
-                obj["avista"], obj["id"]
-            )
+            update_avista = "INSERT INTO wshop.detalheprecos AS d (iddetalhe, cdempresa, idtabela, qtminima, vlpreco, stexp)\
+	                VALUES ('{}', '001', '01000EBK0Y', 0, {}, 'A') \
+                ON CONFLICT (iddetalhe, cdempresa, idtabela) DO UPDATE\
+	            SET vlpreco = {} WHERE d.iddetalhe = '{}'".format(obj["id"], obj["avista"], obj["avista"], obj["id"])
 
             dbpg.execute(update_avista)
             dbpg.execute(update_prazo)
