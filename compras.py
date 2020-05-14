@@ -81,3 +81,17 @@ class Compras:
             return {"message": "Preços atualizados com sucesso", "success": True}
         except:
             return {"message": "Erro ao atualizar erro", "success": False}
+
+    @staticmethod
+    def get_fornecedores():
+        dbpg = pgdb()
+        rows = dbpg.query(
+            """select d.iddocumento
+                ,d.dtemissao
+                ,p.nmpessoa
+                ,d.vltotal 
+            from wshop.documen d
+                join wshop.pessoas p on d.idpessoa = p.idpessoa 
+            where d.cdespecie = 'NFe' order by d.dtreferencia desc"""
+        )
+        return rows.to_json(orient="records")
