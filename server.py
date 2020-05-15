@@ -52,11 +52,24 @@ def atualizar():
     pref.gravar()
     return {"message": "Configurações atualizadas"}
 
-
 @app.route("/preferencias", methods=["GET"])
 def get_preferencias():
     return json.dumps(pref.data)
 
+@app.route("/compras/get_fornecedores")
+def get_fornecedores():
+    nome = request.args.get("nome")
+    nome = '' if nome == None else nome
+    return Response(Compras.get_fornecedores(nome), mimetype="application/json")
+
+@app.route("/compras/get_pedidos")
+def get_pedidos():
+    return Response(Compras.get_pedidos(), mimetype="application/json")
+
+@app.route("/compras/post_criar_pedido", methods=["POST"])
+def post_criar_pedido():
+    obj = json.loads(request.data)
+    return Compras.post_criar_pedido(obj)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
