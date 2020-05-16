@@ -102,19 +102,20 @@ class Compras:
         arquivos.sort(reverse=True)
         ret = pd.DataFrame()
         for arquivo in arquivos:
-            arquivo = arquivo.split('__')
-            ret = ret.append({'idpessoa': arquivo[2], 'strdata': arquivo[0], 'nmpessoa': arquivo[1]}, ignore_index=True)
+            arq = arquivo.split('__')
+            ret = ret.append({'idpessoa': arq[2], 'strdata': arq[0], 'nmpessoa': arq[1], 'arquivo': arquivo}, ignore_index=True)
         return ret.to_json(orient="records")
 
     @staticmethod
     def post_criar_pedido(obj):
         arquivo = 'pedidos/' + obj['strdata'] + '__' + obj['nmpessoa'] + '__' + obj['idpessoa'] + '.h5'
+        arquivo = arquivo.replace(' ', '-')
         dbpg = pgdb()
         lista = dbpg.query("""select d.cdprincipal, d.iddetalhe 
                                 ,round(sum(COALESCE(di.qtitem,0))/90*30-COALESCE(es.qtestoque,0)) demanda
-                                ,round(COALESCE(es.qtestoque,0)) qtd_atual
-                                ,d.dsdetalhe produto
-                                ,to_char(inv.dtemissao, 'DD/MM/YYYY') ult_ajuste
+                                ,round(COALESCE(es.qtestoque,0)) qtestoque
+                                ,d.dsdetalhe
+                                ,to_char(inv.dtemissao, 'DD/MM/YYYY') ultajuste
                                 from wshop.detalhe d
                                 join wshop.produto p on p.idproduto = d.idproduto 
                                 left join wshop.docitem di on di.iddetalhe = d.iddetalhe
@@ -138,7 +139,18 @@ class Compras:
 
         lista['qtd_compra'] = 0
         lista['vl_compra'] = 0
-        lista.to_parquet(arquivo)
+        lista.to_csv(arquivo)
         Compras.pedido_compra = lista
         return {"message": "Pedido criado com sucesso", "success": True, "arquivo": arquivo}
 
+    @staticmethod
+    def get_pedido_itens(arquivo):
+        ret =  pd.read_csv(arquivo).sort_values('dsdetalhe')
+        return ret.to_json(orient='records')
+
+    @staticmethod
+    def post_pedido_remover_item(obj):
+        ret =  pd.read_csv(obj.arquivo)
+        ret = ret[ret[obj.iddetalhe] != obj.iddetalhe]
+        ret.to_csv(obj.arquivo)
+        return {"message": "Prduto removido com sucesso", "success": True, "arquivo": obj.arquivo}

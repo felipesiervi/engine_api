@@ -71,5 +71,16 @@ def post_criar_pedido():
     obj = json.loads(request.data)
     return Compras.post_criar_pedido(obj)
 
+@app.route("/compras/get_pedido_itens")
+def get_pedido_itens():
+    arquivo = request.args.get("arquivo")
+    return Response(Compras.get_pedido_itens(arquivo), mimetype="application/json")
+
+@app.route("/compras/post_pedido_remover_item", methods=["POST"])
+def post_pedido_remover_item():
+    obj = json.loads(request.data)
+    return Compras.post_pedido_remover_item(obj)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
