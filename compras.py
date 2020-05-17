@@ -115,13 +115,16 @@ class Compras:
         ret = pd.DataFrame()
         for arquivo in arquivos:
             arq = arquivo.split('__')
-            ret = ret.append({'idpessoa': arq[2], 'strdata': arq[0], 'nmpessoa': arq[1], 'arquivo': arquivo}, ignore_index=True)
+            data = arq[0][8:18].split('_')
+            data.reverse()
+            data = '/'.join(data)
+            ret = ret.append({'idpessoa': arq[2], 'strdata': data, 'nmpessoa': arq[1], 'arquivo': arquivo}, ignore_index=True)
         return ret.to_json(orient="records")
 
     @staticmethod
     def post_criar_pedido(obj):
         arquivo = 'pedidos/' + obj['strdata'] + '__' + obj['nmpessoa'] + '__' + obj['idpessoa'] + '.csv'
-        arquivo = arquivo.replace(' ', '-')
+        arquivo = arquivo.replace(' ', '-').replace('&', '')
         dbpg = pgdb()
         lista = dbpg.query("""select d.cdprincipal, d.iddetalhe 
                                 ,round(sum(COALESCE(di.qtitem,0))/90*30-COALESCE(es.qtestoque,0)) demanda
