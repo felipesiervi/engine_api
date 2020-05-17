@@ -81,6 +81,21 @@ def post_pedido_remover_item():
     obj = json.loads(request.data)
     return Compras.post_pedido_remover_item(obj)
 
+@app.route("/compras/get_pedido_item_hist")
+def get_pedido_item_hist():
+    id = request.args.get("id")
+    return Response(Compras.get_pedido_item_hist(id), mimetype="application/json")
+
+@app.route("/compras/post_produto_inativar", methods=["POST"])
+def post_produto_inativar():
+    obj = json.loads(request.data)
+    return Compras.post_produto_inativar(obj)
+
+@app.route("/compras/post_pedido_atualizar_item", methods=["POST"])
+def post_pedido_atualizar_item():
+    obj = json.loads(request.data)
+    return Compras.post_pedido_atualizar_item(obj)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")

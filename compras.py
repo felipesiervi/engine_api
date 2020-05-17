@@ -2,9 +2,21 @@ from dbconn import pgdb
 import json
 import pandas as pd
 import glob
+import time
+
+def iniciar_arquivo():
+    while(Compras.arquivo_lock):
+        print('esperando...')
+        time.sleep(0.5)
+
+    Compras.arquivo_lock = True
+
+def finalizar_arquivo():
+    Compras.arquivo_lock = False
 
 class Compras:
     pedido_compra = pd.DataFrame()
+    arquivo_lock = False
 
     @staticmethod
     def get_notas():
@@ -98,7 +110,7 @@ class Compras:
 
     @staticmethod
     def get_pedidos():
-        arquivos = glob.glob("pedidos/*.h5")
+        arquivos = glob.glob("pedidos/*.csv")
         arquivos.sort(reverse=True)
         ret = pd.DataFrame()
         for arquivo in arquivos:
@@ -108,7 +120,7 @@ class Compras:
 
     @staticmethod
     def post_criar_pedido(obj):
-        arquivo = 'pedidos/' + obj['strdata'] + '__' + obj['nmpessoa'] + '__' + obj['idpessoa'] + '.h5'
+        arquivo = 'pedidos/' + obj['strdata'] + '__' + obj['nmpessoa'] + '__' + obj['idpessoa'] + '.csv'
         arquivo = arquivo.replace(' ', '-')
         dbpg = pgdb()
         lista = dbpg.query("""select d.cdprincipal, d.iddetalhe 
@@ -137,20 +149,65 @@ class Compras:
                                 having (round(sum(di.qtitem)/90*30-es.qtestoque) > es.qtestoque or es.qtestoque <= 0 or es.iddetalhe is null)
                             order by demanda desc""")
 
-        lista['qtd_compra'] = 0
-        lista['vl_compra'] = 0
-        lista.to_csv(arquivo)
+        lista['qtdcompra'] = 0
+        lista['vlcompra'] = 0.0
+        lista['arquivo'] = arquivo
+
+        lista.to_csv(arquivo, index=False)
         Compras.pedido_compra = lista
         return {"message": "Pedido criado com sucesso", "success": True, "arquivo": arquivo}
 
     @staticmethod
     def get_pedido_itens(arquivo):
-        ret =  pd.read_csv(arquivo).sort_values('dsdetalhe')
+        iniciar_arquivo()
+        ret =  pd.read_csv(arquivo)
+        finalizar_arquivo()
         return ret.to_json(orient='records')
 
     @staticmethod
     def post_pedido_remover_item(obj):
-        ret =  pd.read_csv(obj.arquivo)
-        ret = ret[ret[obj.iddetalhe] != obj.iddetalhe]
-        ret.to_csv(obj.arquivo)
-        return {"message": "Prduto removido com sucesso", "success": True, "arquivo": obj.arquivo}
+        iniciar_arquivo()
+        ret =  pd.read_csv(obj['arquivo'])
+        ret = ret[ret['iddetalhe'] != obj['iddetalhe']]
+        ret.to_csv(obj['arquivo'], index=False)
+        finalizar_arquivo()
+        return {"message": "Prduto removido com sucesso", "success": True, "arquivo": obj['arquivo']}
+
+    @staticmethod
+    def get_pedido_item_hist(id):
+        dbpg = pgdb()
+        qry = """select p.nmpessoa "nomePessoa"
+                    ,de.dsdetalhe "nomeProduto"
+                    ,di.iddetalhe "id"
+                    ,di.vlsubst + di.vlipi + di.vlunitario "valorCusto"
+                    ,to_char(d.dtemissao, 'DD/MM/YYYY') "emissao"
+                from wshop.documen d
+                    join wshop.docitem di on di.iddocumento = d.iddocumento 
+                    join wshop.pessoas p on p.idpessoa = d.idpessoa 
+                    join wshop.detalhe de on de.iddetalhe = di.iddetalhe 
+                where 1=1
+                    and di.iddetalhe = '{}'
+                    and d.tpoperacao = 'C'
+                    order by d.dtemissao desc""".format(id)
+
+        rows = dbpg.query(qry)
+        return json.dumps(rows.to_dict("records"))
+
+    @staticmethod
+    def post_produto_inativar(obj):
+        dbpg = pgdb()
+        dbpg.execute("update wshop.detalhe set stexp = 'a' where iddetalhe = '{}'".format(obj['iddetalhe']))
+        return {"message": "Prduto inativado com sucesso", "success": True}
+
+    @staticmethod
+    def post_pedido_atualizar_item(obj):
+        iniciar_arquivo()
+        ret = pd.read_csv(obj['arquivo'])
+        ret.set_index('iddetalhe', inplace=True)
+        ret.at[obj['iddetalhe'], 'qtdcompra'] = obj['qtdcompra']
+        ret.at[obj['iddetalhe'], 'vlcompra'] = obj['vlcompra']
+        ret.to_csv(obj['arquivo'])
+        finalizar_arquivo()
+        return {"message": "Produto atualizado com sucesso", "success": True, "arquivo": obj['arquivo']}
+
+
