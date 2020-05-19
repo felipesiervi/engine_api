@@ -127,12 +127,11 @@ class Compras:
         arquivo = arquivo.replace(' ', '-').replace('&', '')
         dbpg = pgdb()
         lista = dbpg.query("""select d.cdprincipal, d.iddetalhe 
-                                ,round(sum(COALESCE(di.qtitem,0))/90*30-COALESCE(es.qtestoque,0)) demanda
-                                ,round(COALESCE(es.qtestoque,0)) qtestoque
-                                ,d.dsdetalhe
-                                ,to_char(inv.dtemissao, 'DD/MM/YYYY') ultajuste
+                                ,round(sum(COALESCE(di.qtitem,0))/90*40-COALESCE(es.qtestoque,0)) demanda
+                                ,round(COALESCE(es.qtestoque,0)) qtd_atual
+                                ,d.dsdetalhe produto
+                                ,to_char(inv.dtemissao, 'DD/MM/YYYY') ult_ajuste
                                 from wshop.detalhe d
-                                join wshop.produto p on p.idproduto = d.idproduto 
                                 left join wshop.docitem di on di.iddetalhe = d.iddetalhe
                                 left join wshop.detalhe_montagem dm on dm.iddetalhe = d.iddetalhe
                                 left join (select ee.iddetalhe, ee.qtestoque from wshop.estoque ee
@@ -147,10 +146,10 @@ class Compras:
                                 where  (di.dtreferencia > current_date-90 and di.tpoperacao = 'V' or di.tpoperacao is null)
                                 --and d.dsdetalhe like '%PREGO%'
                                 and (not dm.stdesmembracomposicao or dm.iddetalhe is null) 
-                                and d.stexp = 'A' 
+                                and stdetalheativo != 'f'
                                 group by d.iddetalhe, d.dsdetalhe, es.qtestoque, d.cdprincipal, es.iddetalhe, inv.dtemissao
-                                having (round(sum(di.qtitem)/90*30-es.qtestoque) > es.qtestoque or es.qtestoque <= 0 or es.iddetalhe is null)
-                            order by demanda desc""")
+                                having (round(sum(di.qtitem)/90*40-es.qtestoque) > es.qtestoque or es.qtestoque <= 0 or es.iddetalhe is null)
+                            order by demanda desc, d.dsdetalhe""")
 
         lista['qtdcompra'] = 0
         lista['vlcompra'] = 0.0
@@ -199,7 +198,7 @@ class Compras:
     @staticmethod
     def post_produto_inativar(obj):
         dbpg = pgdb()
-        dbpg.execute("update wshop.detalhe set stexp = 'a' where iddetalhe = '{}'".format(obj['iddetalhe']))
+        dbpg.execute("update wshop.detalhe set stdetalheativo = 'f' where iddetalhe = '{}'".format(obj['iddetalhe']))
         return {"message": "Prduto inativado com sucesso", "success": True}
 
     @staticmethod
