@@ -132,7 +132,7 @@ class Compras:
                                 ,d.dsdetalhe produto
                                 ,to_char(inv.dtemissao, 'DD/MM/YYYY') ult_ajuste
                                 from wshop.detalhe d
-                                left join wshop.docitem di on di.iddetalhe = d.iddetalhe
+                                left join wshop.docitem di on di.iddetalhe = d.iddetalhe and di.dtreferencia > current_date-90 and di.tpoperacao = 'V'
                                 left join wshop.detalhe_montagem dm on dm.iddetalhe = d.iddetalhe
                                 left join (select ee.iddetalhe, ee.qtestoque from wshop.estoque ee
                                     where (ee.iddetalhe, ee.dtreferencia) in (
@@ -143,7 +143,7 @@ class Compras:
                             join wshop.docitem di on di.iddocumento = d.iddocumento 
                             where d.cdfiscal in ('1949', '5949')
                             group by di.iddetalhe ) inv on inv.iddetalhe = di.iddetalhe
-                                where  (di.dtreferencia > current_date-90 and di.tpoperacao = 'V' or di.tpoperacao is null)
+                                where 1=1
                                 --and d.dsdetalhe like '%PREGO%'
                                 and (not dm.stdesmembracomposicao or dm.iddetalhe is null) 
                                 and stdetalheativo != 'f'
