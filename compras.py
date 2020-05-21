@@ -17,7 +17,9 @@ def finalizar_arquivo():
 class Compras:
     pedido_compra = pd.DataFrame()
     arquivo_lock = False
+    valor_frete =  {}
 
+    ### NOTAS COMPRA ###
     @staticmethod
     def get_notas():
         dbpg = pgdb()
@@ -108,6 +110,11 @@ class Compras:
         )
         return rows.to_json(orient="records")
 
+    @staticmethod
+    def carregar_fretes():
+        Compras.valor_frete = pd.read_csv('csv/valor_frete.csv').set_index('iddocumento')
+
+    ### PEDIDOS ###
     @staticmethod
     def get_pedidos():
         arquivos = glob.glob("pedidos/*.csv")
@@ -211,5 +218,4 @@ class Compras:
         ret.to_csv(obj['arquivo'])
         finalizar_arquivo()
         return {"message": "Produto atualizado com sucesso", "success": True, "arquivo": obj['arquivo']}
-
 
