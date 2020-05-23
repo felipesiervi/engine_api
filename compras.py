@@ -135,9 +135,9 @@ class Compras:
         dbpg = pgdb()
         lista = dbpg.query("""select d.cdprincipal, d.iddetalhe 
                                 ,round(sum(COALESCE(di.qtitem,0))/90*40-COALESCE(es.qtestoque,0)) demanda
-                                ,round(COALESCE(es.qtestoque,0)) qtd_atual
-                                ,d.dsdetalhe produto
-                                ,to_char(inv.dtemissao, 'DD/MM/YYYY') ult_ajuste
+                                ,round(COALESCE(es.qtestoque,0)) qtestoque
+                                ,d.dsdetalhe
+                                ,to_char(inv.dtemissao, 'DD/MM/YYYY') ultajuste
                                 from wshop.detalhe d
                                 left join wshop.docitem di on di.iddetalhe = d.iddetalhe and di.dtreferencia > current_date-90 and di.tpoperacao = 'V'
                                 left join wshop.detalhe_montagem dm on dm.iddetalhe = d.iddetalhe
@@ -145,11 +145,11 @@ class Compras:
                                     where (ee.iddetalhe, ee.dtreferencia) in (
                                     select d.iddetalhe, max(dtreferencia) dtreferencia from wshop.estoque e
                                     join wshop.detalhe d on e.iddetalhe = d.iddetalhe
-                                    group by d.iddetalhe)) es on es.iddetalhe = di.iddetalhe
+                                    group by d.iddetalhe)) es on es.iddetalhe = d.iddetalhe
                                 left join (select di.iddetalhe , max(d.dtemissao) dtemissao from wshop.documen d
                             join wshop.docitem di on di.iddocumento = d.iddocumento 
                             where d.cdfiscal in ('1949', '5949')
-                            group by di.iddetalhe ) inv on inv.iddetalhe = di.iddetalhe
+                            group by di.iddetalhe ) inv on inv.iddetalhe = d.iddetalhe
                                 where 1=1
                                 --and d.dsdetalhe like '%PREGO%'
                                 and (not dm.stdesmembracomposicao or dm.iddetalhe is null) 
