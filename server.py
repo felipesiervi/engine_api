@@ -96,6 +96,10 @@ def post_pedido_atualizar_item():
     obj = json.loads(request.data)
     return Compras.post_pedido_atualizar_item(obj)
 
+@app.route("/compras/get_preco_lote")
+def get_preco_lote():
+    lista = request.args.get("lista")
+    return Response(Compras.get_preco_lote(lista), mimetype="application/json")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")

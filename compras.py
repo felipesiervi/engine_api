@@ -37,7 +37,7 @@ class Compras:
     @staticmethod
     def get_nota_itens(id):
         dbpg = pgdb()
-        qry = """select di.iddocumentoitem
+        qry = f"""select di.iddocumentoitem
                     ,di.iddetalhe
                     ,cast(di.qtitem as integer) qtitem
                     ,di.vlunitario
@@ -49,10 +49,33 @@ class Compras:
                     ,dp.vlpreco vlprecovista
                     ,di.vlfreterateado
                     ,0.0 vlrateio
+                    ,'' idmontagem
             from wshop.docitem di
                 join wshop.detalhe de on di.iddetalhe = de.iddetalhe 
                 left join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe and idtabela = '01000EBK0Y' 
-            where di.iddocumento = '{}' order by de.dsdetalhe""".format(id)
+            where di.iddocumento = '{id}' 
+        union
+            select dm.idmontagem 
+                ,dm.iddetalhe
+                ,0 qtitem
+                ,di.vlunitario * dmi.nrquantidade vlunitario
+                ,di.vlsubst/di.qtitem * dmi.nrquantidade  vlsubst
+                ,di.vlipi/di.qtitem * dmi.nrquantidade  vlipi
+                ,de.dsdetalhe
+                ,de.allucrodesejada
+                ,de.vlprecovenda vlprecoprazo
+                ,dp.vlpreco vlprecovista
+                ,di.vlfreterateado
+                ,0.0 vlrateio
+                ,dm.idmontagem 
+            from wshop.detalhe_montagem dm 
+                join wshop.detalhe_montagemitem dmi on dm.idmontagem = dmi.idmontagem 
+                join wshop.docitem di on di.iddetalhe = dmi.idreferencia 
+                join wshop.detalhe de on de.iddetalhe = dm.iddetalhe 
+                left join wshop.detalheprecos dp on dp.iddetalhe = de.iddetalhe and idtabela = '01000EBK0Y' 
+            where dmi.idreferencia in (select iddetalhe from wshop.docitem d where d.iddocumento = '{id}')
+                and di.iddocumento = '{id}'
+            order by dsdetalhe"""
 
         rows = dbpg.query(qry)
         rows = rows.fillna(0)
@@ -219,3 +242,21 @@ class Compras:
         finalizar_arquivo()
         return {"message": "Produto atualizado com sucesso", "success": True, "arquivo": obj['arquivo']}
 
+    ### PRECIFICAÇÃO EM LOTE ###
+    @staticmethod
+    def get_preco_lote(lista):
+        query = """select d.iddetalhe, d.dsdetalhe, dp.vlpreco vlprecovista, d.vlprecovenda vlprecoprazo from wshop.detalhe d 
+                    left join wshop.detalheprecos dp on dp.iddetalhe = d.iddetalhe and dp.idtabela = '01000EBK0Y'
+                where d.stdetalheativo 
+                    {}
+                    order by d.dsdetalhe"""
+
+        condicao = "  \nand d.dsdetalhe like upper('%{}%')"
+        where = ""
+
+        for sch in  lista.split(' '):
+            where += condicao.format(sch)
+
+        dbpg = pgdb()
+        rows = dbpg.query(query.format(where))
+        return rows.to_json(orient="records")

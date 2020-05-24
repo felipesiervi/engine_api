@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Arquivo Atual",
+            "name": "server.py",
             "type": "python",
             "request": "launch",
             "program": "server.py",
