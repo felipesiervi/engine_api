@@ -211,7 +211,7 @@ class Compras:
         qry = """select p.nmpessoa "nomePessoa"
                     ,de.dsdetalhe "nomeProduto"
                     ,di.iddetalhe "id"
-                    ,di.vlsubst + di.vlipi + di.vlunitario "valorCusto"
+                    ,di.vlsubst/di.qtitem + di.vlipi/di.qtitem + di.vlunitario "valorCusto"
                     ,to_char(d.dtemissao, 'DD/MM/YYYY') "emissao"
                 from wshop.documen d
                     join wshop.docitem di on di.iddocumento = d.iddocumento 
