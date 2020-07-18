@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import glob
 import time
+import os
 
 def iniciar_arquivo():
     while(Compras.arquivo_lock):
@@ -181,6 +182,16 @@ class Compras:
                                 having (round(sum(di.qtitem)/90*40-es.qtestoque) > es.qtestoque or es.qtestoque <= 0 or es.iddetalhe is null)
                             order by demanda desc, d.dsdetalhe""")
 
+        # Remover itens de outros pedidos
+        ped = pd.DataFrame()
+        arquivos = glob.glob("pedidos/*.csv")
+        for arq in arquivos:
+            ped = pd.concat([ped, pd.read_csv(arq)], ignore_index=True)
+            
+        itens_remover = ped[ped['qtdcompra'] > 0]['iddetalhe'].unique()
+
+        lista = lista[~lista['iddetalhe'].isin(itens_remover)]
+
         lista['qtdcompra'] = 0
         lista['vlcompra'] = 0.0
         lista['arquivo'] = arquivo
@@ -203,7 +214,7 @@ class Compras:
         ret = ret[ret['iddetalhe'] != obj['iddetalhe']]
         ret.to_csv(obj['arquivo'], index=False)
         finalizar_arquivo()
-        return {"message": "Prduto removido com sucesso", "success": True, "arquivo": obj['arquivo']}
+        return {"message": "Produto removido com sucesso", "success": True, "arquivo": obj['arquivo']}
 
     @staticmethod
     def get_pedido_item_hist(id):
@@ -237,10 +248,16 @@ class Compras:
         ret = pd.read_csv(obj['arquivo'])
         ret.set_index('iddetalhe', inplace=True)
         ret.at[obj['iddetalhe'], 'qtdcompra'] = obj['qtdcompra']
-        ret.at[obj['iddetalhe'], 'vlcompra'] = obj['vlcompra']
+        ret.at[obj['iddetalhe'], 'vlcompra'] = float(obj['vlcompra'])
         ret.to_csv(obj['arquivo'])
         finalizar_arquivo()
         return {"message": "Produto atualizado com sucesso", "success": True, "arquivo": obj['arquivo']}
+
+    @staticmethod
+    def post_pedido_arquivar(obj):
+        arquivo = obj['arquivo']
+        os.rename(arquivo, arquivo.replace("\\", "\\old\\"))
+        return {"message": "Pedido arquivado com sucesso", "success": True, "arquivo": obj['arquivo']}
 
     ### PRECIFICAÇÃO EM LOTE ###
     @staticmethod

@@ -101,5 +101,11 @@ def get_preco_lote():
     lista = request.args.get("lista")
     return Response(Compras.get_preco_lote(lista), mimetype="application/json")
 
+@app.route("/compras/post_pedido_arquivar", methods=["POST"])
+def post_pedido_arquivar():
+    obj = json.loads(request.data)
+    return Compras.post_pedido_arquivar(obj)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0")

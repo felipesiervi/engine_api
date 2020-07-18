@@ -1,6 +1,7 @@
 pedidos/
 csv/
 input/
+__pycache__/
 nohup.out
 
 # Byte-compiled / optimized / DLL files
