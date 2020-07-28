@@ -188,9 +188,9 @@ class Compras:
         for arq in arquivos:
             ped = pd.concat([ped, pd.read_csv(arq)], ignore_index=True)
             
-        itens_remover = ped[ped['qtdcompra'] > 0]['iddetalhe'].unique()
-
-        lista = lista[~lista['iddetalhe'].isin(itens_remover)]
+        if(len(arquivos) > 0):
+            itens_remover = ped[ped['qtdcompra'] > 0]['iddetalhe'].unique()
+            lista = lista[~lista['iddetalhe'].isin(itens_remover)]
 
         lista['qtdcompra'] = 0
         lista['vlcompra'] = 0.0
