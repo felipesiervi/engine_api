@@ -33,7 +33,7 @@ class Compras:
                 join wshop.pessoas p on d.idpessoa = p.idpessoa 
             where d.cdespecie = 'NFe' order by d.dtreferencia desc"""
         )
-        return rows.to_json(orient="records")
+        return rows.head(100).to_json(orient="records")
 
     @staticmethod
     def get_nota_itens(id):
@@ -176,6 +176,7 @@ class Compras:
                             group by di.iddetalhe ) inv on inv.iddetalhe = d.iddetalhe
                                 where 1=1
                                 --and d.dsdetalhe like '%PREGO%'
+                                and d.cdprincipal not in ('001787')
                                 and (not dm.stdesmembracomposicao or dm.iddetalhe is null) 
                                 and stdetalheativo != 'f'
                                 group by d.iddetalhe, d.dsdetalhe, es.qtestoque, d.cdprincipal, es.iddetalhe, inv.dtemissao
