@@ -127,7 +127,7 @@ class Compras:
     def get_fornecedores(nome):
         dbpg = pgdb()
         rows = dbpg.query(
-            """select p.idpessoa, p.nmpessoa, p.nmfantasia from wshop.pessoas p
+            """select p.idpessoa, replace(p.nmpessoa,'/','-') nmpessoa, p.nmfantasia from wshop.pessoas p
                 where p.sttipopessoa  = 'F' and p.stativo = 'S'
                     and (p.nmpessoa like upper('%{}%') or p.nmfantasia like upper('%{}%'))
                 order by p.nmpessoa """.format(nome, nome)
