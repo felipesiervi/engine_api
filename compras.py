@@ -45,7 +45,7 @@ class Compras:
                     ,di.vlsubst/di.qtitem vlsubst
                     ,di.vlipi/di.qtitem vlipi
                     ,de.dsdetalhe
-                    ,de.allucrodesejada
+                    ,coalesce(de.allucrodesejada, 0) allucrodesejada
                     ,de.vlprecovenda vlprecoprazo
                     ,dp.vlpreco vlprecovista
                     ,di.vlfreterateado
@@ -63,7 +63,7 @@ class Compras:
                 ,di.vlsubst/di.qtitem * dmi.nrquantidade  vlsubst
                 ,di.vlipi/di.qtitem * dmi.nrquantidade  vlipi
                 ,de.dsdetalhe
-                ,de.allucrodesejada
+                ,coalesce(de.allucrodesejada, 0) allucrodesejada
                 ,de.vlprecovenda vlprecoprazo
                 ,dp.vlpreco vlprecovista
                 ,di.vlfreterateado
